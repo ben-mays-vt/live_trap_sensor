@@ -1,0 +1,74 @@
+#include <RH_ASK.h>
+#include <SPI.h> // Not actually used but needed to compile
+
+
+
+//program for micro final
+//transmits data between two arduinos using RF communication
+RH_ASK driver(2000, 8, 12, 11);
+bool isTriggered = false;
+
+//email setup
+
+void setup() {
+  Serial.begin(9600);
+  if (!driver.init())
+  {
+     Serial.println("init failed");
+  }
+  pinMode(7,INPUT);
+  Serial.println("started");
+
+}
+
+void loop() {
+
+  //uncomment the one you want to send
+  //sender();
+  reciver();
+}
+
+//put all the code for the reciver in here
+void reciver(){
+  uint8_t buf[12];
+  uint8_t buflen = sizeof(buf);
+  if (driver.recv(buf, &buflen)) // Non-blocking
+  {
+    int i;
+    // Message with a good checksum received, dump it.
+    Serial.print("Message: ");
+    Serial.println((char*)buf); 
+    if((char*)buf == "open"){
+      //don't send message/send all clear message
+      isTriggered = false;
+      //also can be "reset"
+    } 
+    if((char*)buf == "closed"){
+      if(isTriggered==false){
+        //first trigger: send message
+        Serial.println("first trigger");
+      }
+      else{
+        //still triggered, don't send message but keep status
+      }
+      //send message/
+    } 
+  }
+
+}
+
+//put all code for sender in here
+void sender(){
+  char *msg;
+  if(digitalRead(7)==true){
+  *msg="open";  
+  }
+  else{
+  *msg="closed";  
+  }
+  driver.send((uint8_t *)msg, strlen(msg));
+  driver.waitPacketSent();
+  delay(1000);
+
+}
+
